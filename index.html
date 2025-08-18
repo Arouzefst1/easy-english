@@ -1,0 +1,1016 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Easy English — English + Hindi</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  });
+}
+</script>
+<style>
+  :root{
+    --bg:#f7f7f9;
+    --panel:#fff;
+    --accent:#2b6cb0;
+    --muted:#666;
+    --pill-border:#e9f3ff;
+  --scroll-track:#e2e8f0;
+  --scroll-thumb:#b7c6d6;
+  }
+  body.dark{
+    --bg:#0b1220;
+    --panel:#141d2e;
+    --accent:#5da9ff;
+    --muted:#9db4d1;
+    --pill-border:#1e2b40;
+    color:#f2f7ff;
+  --scroll-track:#162234;
+  --scroll-thumb:#2b3e55;
+  }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,Roboto,Arial;margin:0;background:var(--bg);color:inherit}
+  .app{display:flex;min-height:100vh;height:100vh;overflow:hidden}
+  body,html{height:100%;}
+  /* Modern scrollbars */
+  .sidebar,.main{scrollbar-width:thin;scrollbar-color:var(--scroll-thumb) var(--scroll-track)}
+  .sidebar::-webkit-scrollbar,.main::-webkit-scrollbar{width:10px}
+  .sidebar::-webkit-scrollbar-track,.main::-webkit-scrollbar-track{background:var(--scroll-track);border-radius:8px}
+  .sidebar::-webkit-scrollbar-thumb,.main::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:8px;border:2px solid var(--scroll-track)}
+  .sidebar::-webkit-scrollbar-thumb:hover,.main::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+  /* LEFT: sidebar */
+  .sidebar{width:34%;max-width:320px;background:var(--panel);padding:18px;border-right:1px solid #eee;position:relative;overflow-y:auto}
+  .title{font-size:20px;font-weight:700;margin:0 0 6px}
+  .hint{color:var(--muted);margin-bottom:10px}
+  .search{margin:8px 0}
+  input[type="search"]{width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;font-size:15px}
+  /* Larger category items (requested: #1) */
+  .cat{display:flex;align-items:center;gap:6px;padding:14px 12px;border-radius:12px;margin:8px 0;cursor:pointer;font-size:17px;border:1px solid transparent;position:relative;background:linear-gradient(120deg,#eef5ff,#ffffff,#eef5ff);background-size:200% 200%;animation:catIdle 9s ease infinite}
+  body.dark .cat{background:linear-gradient(120deg,#18263b,#101b2d,#18263b)}
+  .cat:hover{background:linear-gradient(120deg,#e2f1ff,#ffffff,#e2f1ff);animation:catHover 3s linear infinite}
+  .cat.active{border-color:#d0e1ff;box-shadow:0 0 0 2px rgba(43,108,176,0.15)}
+  body.dark .cat.active{border-color:#28456b;box-shadow:0 0 0 2px rgba(93,169,255,0.18)}
+  @keyframes catIdle{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
+  @keyframes catHover{0%{background-position:0 50%}100%{background-position:100% 50%}}
+  .drag-handle{font-size:16px;opacity:.55;cursor:grab}
+  .rearrange-mode .cat{outline:2px dashed rgba(43,108,176,0.4)}
+  body.dark.rearrange-mode .cat{outline:2px dashed rgba(93,169,255,0.5)}
+  /* RIGHT: main content */
+  .main{flex:1;padding:18px;overflow-y:auto}
+  /* Heading with adjustable font size (requested) */
+  .main-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;position:relative}
+  .main-title{font-weight:800;margin:0}
+  .font-controls{display:flex;gap:8px;align-items:center}
+  .font-controls button{padding:6px 10px;border-radius:8px;border:0;background:#eef4ff;color:var(--accent);cursor:pointer;font-weight:700}
+  body.dark .font-controls button{background:#1e2e46;color:#5da9ff}
+  /* Settings menu */
+  .settings-wrapper{position:relative}
+  #settingsBtn{background:#eef4ff;border:0;border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  body.dark #settingsBtn{background:#1e2e46}
+  #settingsMenu{position:absolute;right:0;top:48px;background:var(--panel);border:1px solid var(--pill-border);border-radius:12px;padding:10px;min-width:170px;box-shadow:0 6px 24px rgba(2,6,23,0.3);display:none;flex-direction:column;gap:4px;z-index:50}
+  #settingsMenu button{background:transparent;border:0;text-align:left;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:8px;color:inherit;width:100%}
+  #settingsMenu button:hover{background:rgba(43,108,176,0.08)}
+  body.dark #settingsMenu button:hover{background:rgba(93,169,255,0.12)}
+  #settingsMenu button.active{background:rgba(43,108,176,0.15);font-weight:600}
+  body.dark #settingsMenu button.active{background:rgba(93,169,255,0.2)}
+  /* grid and pills */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  /* Increased pill font-size & size (requested: #2) */
+  .pill{background:var(--panel);border-radius:14px;padding:20px;border:1px solid var(--pill-border);text-align:center;cursor:pointer;min-height:64px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;box-shadow:0 1px 0 rgba(16,24,40,0.03);position:relative}
+  .pill:active{transform:translateY(1px)}
+  .pill.editing{outline:2px solid var(--accent)}
+  .edit-icon{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:8px;background:#eef4ff;color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;cursor:pointer;opacity:0;transition:opacity .2s}
+  body.dark .edit-icon{background:#1e2e46;color:#5da9ff}
+  .edit-mode .pill .edit-icon{opacity:1}
+  .inline-save{background:#1f8351;color:#fff;border:0;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:4px;margin-right:8px}
+  body.dark .inline-save{background:#277a55}
+  .inline-save:hover{filter:brightness(1.05)}
+  .delete-icon{position:absolute;top:6px;right:36px;width:26px;height:26px;border-radius:8px;background:#ffe5e5;color:#c53030;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;cursor:pointer;opacity:0;transition:opacity .2s}
+  .pill.editing .edit-icon{right:6px}
+  .pill.editing .delete-icon{right:36px}
+  body.dark .delete-icon{background:#442022;color:#ff6b6b}
+  .edit-mode .pill .delete-icon{opacity:1}
+  .edit-mode .cat .delete-icon, .edit-mode .cat .edit-icon{opacity:1}
+  .cat .delete-icon{right:36px}
+  .big-edit-wrap{position:absolute;top:8px;right:8px;display:flex;gap:6px}
+  .big-edit-btn{background:#eef4ff;border:0;border-radius:10px;padding:6px 8px;cursor:pointer;font-size:13px;color:var(--accent);display:flex;align-items:center;gap:4px}
+  body.dark .big-edit-btn{background:#1e2e46;color:#5da9ff}
+  .big-editing{outline:2px dashed var(--accent);padding:4px;border-radius:8px}
+  .pill.drag-over{outline:2px dashed var(--accent)}
+  .cat.drag-over{outline:2px dashed var(--accent)}
+  .rearrange-mode .pill{outline:2px dashed rgba(43,108,176,0.4)}
+  body.dark.rearrange-mode .pill{outline:2px dashed rgba(93,169,255,0.5)}
+  /* overlay big view */
+  .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.38);z-index:9999;padding:18px}
+  .bigcard{width:100%;max-width:920px;background:var(--panel);border-radius:12px;padding:26px;box-shadow:0 10px 30px rgba(2,6,23,0.25);position:relative}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .back{background:transparent;border:0;color:var(--accent);font-weight:800;font-size:15px;cursor:pointer}
+  .bigwrap{display:flex;gap:16px;align-items:flex-start}
+  .big-eng{font-size:36px;font-weight:800;line-height:1.12}
+  .big-hin{font-size:20px;color:var(--muted);margin-top:10px}
+  .speaker-btn{width:64px;height:64px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#eef7ff,#e3f0ff);border:1px solid #d6eaff;cursor:pointer;transition:transform .15s}
+  body.dark .speaker-btn{background:linear-gradient(180deg,#1b2a40,#1a2535);border-color:#23354f}
+  /* Speaker animation while speaking (requested: #4) */
+  .speaker-btn.speaking{
+    animation: pulse 900ms infinite;
+    transform: scale(1.03);
+    box-shadow: 0 6px 24px rgba(43,108,176,0.18);
+  }
+  @keyframes pulse{
+    0%{ transform: scale(1); box-shadow: 0 6px 18px rgba(43,108,176,0.12); }
+    50%{ transform: scale(1.06); box-shadow: 0 12px 36px rgba(43,108,176,0.20); }
+    100%{ transform: scale(1); box-shadow: 0 6px 18px rgba(43,108,176,0.12); }
+  }
+  .smallnote{color:var(--muted);font-size:13px;margin-top:12px}
+  /* floating save button */
+  #saveAll{position:fixed;bottom:20px;right:20px;z-index:10000;background:#2b6cb0;color:#fff;border:0;font-weight:700;font-size:15px;padding:14px 20px;border-radius:14px;cursor:pointer;display:none;box-shadow:0 8px 28px rgba(2,6,23,0.35)}
+  #saveAll.dirty{display:inline-flex;align-items:center;gap:8px}
+  body.dark #saveAll{background:#5da9ff;color:#0b1220}
+  /* add category button */
+  #addCategoryBtn{margin-top:16px;width:100%;padding:12px 14px;font-size:15px;font-weight:600;border-radius:12px;border:1px dashed var(--accent);background:transparent;color:var(--accent);cursor:pointer}
+  body.dark #addCategoryBtn{border-color:#5da9ff;color:#5da9ff}
+  #addCategoryBtn:hover{background:rgba(43,108,176,0.08)}
+  body.dark #addCategoryBtn:hover{background:rgba(93,169,255,0.12)}
+  /* Responsive */
+  @media(max-width:760px){
+    .hamburger{display:inline-flex}
+    .sidebar{display:none;position:fixed;top:0;left:0;bottom:0;width:80%;max-width:300px;z-index:500;border-right:1px solid #1e2b40;border-bottom:0;padding-top:60px;box-shadow:0 0 0 9999px rgba(0,0,0,0.45)}
+    body.show-cats .sidebar{display:block;}
+    .app{flex-direction:column}
+    .main{padding-top:54px}
+    .grid{grid-template-columns:1fr}
+    .big-eng{font-size:28px}
+    #mobileTopBar{display:flex}
+  }
+  .hamburger{display:none;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:#eef4ff;border:0;font-size:20px;font-weight:700;cursor:pointer}
+  body.dark .hamburger{background:#1e2e46;color:#5da9ff}
+  #mobileTopBar{position:fixed;left:0;top:0;right:0;height:54px;display:none;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--pill-border);z-index:480}
+  #mobileTitle{font-size:16px;font-weight:700;margin:0}
+</style>
+</head>
+<body>
+<div id="mobileTopBar">
+  <button id="hamburger" class="hamburger" aria-label="Menu">≡</button>
+  <h1 id="mobileTitle">Easy English</h1>
+  <div style="display:flex;gap:6px;align-items:center">
+    <button id="mobileSettingsBtn" aria-label="Settings" style="background:#eef4ff;border:0;border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6c.26 0 .51-.05.74-.14A1.65 1.65 0 0 0 10.6 3.4V3a2 2 0 1 1 4 0v.09c0 .69.4 1.31 1.02 1.6.23.09.48.14.74.14a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c0 .26.05.51.14.74.29.62.91 1.02 1.6 1.02H21a2 2 0 1 1 0 4h-.09c-.69 0-1.31.4-1.6 1.02-.09.23-.14.48-.14.74z"/></svg></button>
+  </div>
+</div>
+<div class="app">
+  <aside class="sidebar" aria-label="Topics">
+    <div class="title">Easy English</div>
+    <div class="hint">Tap a topic → show phrase cards</div>
+    <div class="search"><input id="search" type="search" placeholder="Search phrase or word"></div>
+    <div id="categories" style="margin-top:10px"></div>
+  <button id="addCategoryBtn" type="button" style="display:none">+ Add Category</button>
+  </aside>
+
+  <main class="main" aria-live="polite">
+    <!-- adjustable heading at the top of main content -->
+    <div class="main-header">
+      <h2 id="mainTitle" class="main-title">Select a topic</h2>
+      <div class="font-controls" title="Adjust heading size">
+        <button id="decFont">−</button>
+        <button id="incFont">+</button>
+        <div class="settings-wrapper">
+          <button id="settingsBtn" aria-label="Settings" title="Settings">
+            <!-- gear icon -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6c.26 0 .51-.05.74-.14A1.65 1.65 0 0 0 10.6 3.4V3a2 2 0 1 1 4 0v.09c0 .69.4 1.31 1.02 1.6.23.09.48.14.74.14a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c0 .26.05.51.14.74.29.62.91 1.02 1.6 1.02H21a2 2 0 1 1 0 4h-.09c-.69 0-1.31.4-1.6 1.02-.09.23-.14.48-.14.74z"/></svg>
+          </button>
+          <div id="settingsMenu" role="menu" aria-label="Settings Menu">
+            <button id="toggleDark" role="menuitem">🌙 Dark Mode</button>
+            <button id="toggleEdit" role="menuitem">✎ Edit Mode</button>
+            <button id="toggleRearrange" role="menuitem">≡ Rearrange Mode</button>
+            <div style="height:6px"></div>
+            <button id="resetAll" role="menuitem" style="color:#c53030;font-weight:600">↺ Reset to Default</button>
+          </div>
+        </div>
+  <button id="addPhraseBtn" style="padding:6px 12px;border-radius:10px;border:1px solid var(--pill-border);background:var(--panel);cursor:pointer;font-weight:600;display:none">+ Add Phrase</button>
+  <button id="modeDoneBtn" style="padding:6px 12px;border-radius:10px;border:1px solid var(--pill-border);background:#2b6cb0;color:#fff;cursor:pointer;font-weight:600;display:none">Done</button>
+      </div>
+    </div>
+
+    <div id="content">
+      <div style="color:var(--muted)">Select a topic on the left or use search.</div>
+    </div>
+  </main>
+</div>
+
+<!-- overlay -->
+<div id="overlay" class="overlay" role="dialog" aria-modal="true">
+  <div class="bigcard" role="document">
+    <div class="topbar">
+      <button id="btnBack" class="back" aria-label="Back">&larr; Back</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="btnCopy" title="Copy phrase" style="padding:8px 12px;border-radius:10px;border:0;background:#48bb78;color:#fff;font-weight:700;cursor:pointer">Copy</button>
+      </div>
+    </div>
+    <div class="bigwrap">
+      <div style="flex:1">
+        <div id="bigEng" class="big-eng" aria-live="polite"></div>
+        <div id="bigHin" class="big-hin"></div>
+      </div>
+      <button id="btnSpeak" class="speaker-btn" aria-label="Speak (English then Hindi)">
+        <!-- speaker SVG -->
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 9v6h4l5 4V5L9 9H5z" fill="#2b6cb0"/>
+          <path d="M16.5 8.5a3.5 3.5 0 010 7" stroke="#2b6cb0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </button>
+    </div>
+    <div class="smallnote">Tap the speaker to hear the phrase. Tap Back or Esc to return.</div>
+  </div>
+</div>
+
+<script>
+/* bilingual DATA (English + Hindi) */
+const DATA = {
+  "Greetings":[
+    {"eng":"Hello. / Hi.","hin":"नमस्ते। / हाय।"},
+    {"eng":"Good morning.","hin":"सुप्रभात।"},
+    {"eng":"Thank you.","hin":"धन्यवाद।"}
+  ],
+  "Food & Restaurant":[
+    {"eng":"I am a vegetarian.","hin":"मैं शाकाहारी हूँ।"},
+    {"eng":"No spice, please.","hin":"मिर्च नहीं, कृपया।"},
+    {"eng":"Can I see the menu?","hin":"क्या मैं मेनू देख सकता/सकती हूँ?"}
+  ],
+  "Time & Date":[
+    {"eng":"What time is it?","hin":"समय क्या हुआ है?"},
+    {"eng":"When does it open?","hin":"यह कब खुलता/खुलती है?"}
+  ],
+  "Directions & Transport":[
+    {"eng":"Where is the taxi stand?","hin":"टैक्सी स्टैंड कहाँ है?"},
+    {"eng":"Take me to this address (show address).","hin":"मुझे इस पते पर ले जाइए (पता दिखाएँ)।"},
+    {"eng":"How far is it?","hin":"यह कितना दूर है?"},
+    {"eng":"Left / Right / Straight","hin":"बाएँ / दाएँ / सीधा"},
+    {"eng":"Which bus goes to the airport?","hin":"कौनसी बस एयरपोर्ट जाती है?"},
+    {"eng":"Please stop here.","hin":"कृपया यहाँ रोकें।"},
+    {"eng":"How much is the ticket?","hin":"टिकट कितने का है?"}
+  ],
+  "Shopping & Money":[
+    {"eng":"How much does this cost?","hin":"यह कितने का है?"},
+    {"eng":"Do you accept cards?","hin":"क्या आप कार्ड स्वीकार करते हैं?"}
+  ],
+  "Accommodation / Hotel":[
+    {"eng":"I have a reservation.","hin":"मेरी 예약 है।"},
+    {"eng":"Do you have Wi-Fi?","hin":"क्या वहाँ वाई-फ़ाई है?"}
+  ],
+  "Medical / Emergency":[
+    {"eng":"I need a doctor.","hin":"मुझे एक डॉक्टर चाहिए।"},
+    {"eng":"Call an ambulance, please.","hin":"कृपया एम्बुलेंस बुलाइए।"}
+  ],
+  "Airport / Customs":[
+    {"eng":"Where is baggage claim?","hin":"बैगेज क्लेम कहाँ है?"},
+    {"eng":"Here is my passport.","hin":"यह मेरा पासपोर्ट है।"}
+  ],
+  "Phone & Connectivity":[
+    {"eng":"Can I use your phone?","hin":"क्या मैं आपका फ़ोन इस्तेमाल कर सकता/सकती हूँ?"},
+    {"eng":"What is the Wi-Fi password?","hin":"वाई-फ़ाई पासवर्ड क्या है?"}
+  ],
+  "Help & Common":[
+    {"eng":"I don't understand.","hin":"मुझे समझ नहीं आया/आयी।"},
+    {"eng":"Speak slowly, please.","hin":"धीरे बोलिये, कृपया।"}
+  ]
+};
+
+// Pristine clone used for full reset
+const ORIGINAL_DATA = JSON.parse(JSON.stringify(DATA));
+
+// Add independent short label (engShort) so pill text edit does not change full phrase
+function ensureShortLabels(){
+  for(const cat of Object.keys(DATA)){
+    DATA[cat].forEach(p=>{ if(!p.engShort){ p.engShort = p.eng; } });
+  }
+}
+ensureShortLabels();
+
+/* ---------------- Persistence (phrases & order) ---------------- */
+const DATA_KEY = 'easyEnglish_data_v1';
+function saveData(){
+  try{
+    const snapshot = {version:1,categoriesOrder,data:DATA};
+    localStorage.setItem(DATA_KEY, JSON.stringify(snapshot));
+  }catch(e){/* ignore */}
+}
+function loadData(){
+  try{
+    const raw = localStorage.getItem(DATA_KEY);
+    if(!raw) return;
+    const parsed = JSON.parse(raw);
+    if(parsed && parsed.version===1 && parsed.data){
+      // clear then copy (preserve references if any other code points to DATA)
+      for(const k of Object.keys(DATA)) delete DATA[k];
+      Object.entries(parsed.data).forEach(([k,v])=>{ DATA[k] = v; });
+      if(Array.isArray(parsed.categoriesOrder)) categoriesOrder = parsed.categoriesOrder.slice();
+      ensureShortLabels();
+    }
+  }catch(e){/* ignore */}
+}
+loadData();
+
+/* elements */
+const categoriesEl = document.getElementById('categories');
+const contentEl = document.getElementById('content');
+const searchEl = document.getElementById('search');
+const overlay = document.getElementById('overlay');
+let bigEng = document.getElementById('bigEng');
+let bigHin = document.getElementById('bigHin');
+const btnBack = document.getElementById('btnBack');
+const btnSpeak = document.getElementById('btnSpeak');
+const btnCopy = document.getElementById('btnCopy');
+const mainTitle = document.getElementById('mainTitle');
+const incFont = document.getElementById('incFont');
+const decFont = document.getElementById('decFont');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsMenu = document.getElementById('settingsMenu');
+const toggleDark = document.getElementById('toggleDark');
+const toggleEdit = document.getElementById('toggleEdit');
+const toggleRearrange = document.getElementById('toggleRearrange');
+const resetAllBtn = document.getElementById('resetAll');
+const hamburger = document.getElementById('hamburger');
+const mobileSettingsBtn = document.getElementById('mobileSettingsBtn');
+// Deprecated global save button replaced by per-item save; keep element hidden if exists
+const saveAllBtn = document.createElement('div');
+saveAllBtn.style.display='none';
+const addCategoryBtn = document.getElementById('addCategoryBtn');
+const addPhraseBtn = document.getElementById('addPhraseBtn');
+const modeDoneBtn = document.getElementById('modeDoneBtn');
+
+let activeCategory = null;
+let categoriesOrder = Object.keys(DATA);
+let editMode = false;
+let rearrangeMode = false;
+let unsavedChanges = false;
+let currentPhrase = null; // pointer to phrase object in overlay
+
+/* persistence keys */
+const DARK_KEY = 'easyEnglish_dark';
+
+/* init dark mode from storage */
+if(localStorage.getItem(DARK_KEY)==='1'){
+  document.body.classList.add('dark');
+  toggleDark.classList.add('active');
+}
+
+/* create categories */
+function makeCategories(){
+  categoriesEl.innerHTML = '';
+  categoriesOrder.forEach((cat, idx)=>{
+    const d = document.createElement('div');
+    d.className = 'cat';
+    d.textContent = cat;
+    d.tabIndex = 0;
+    d.dataset.cat = cat;
+    if(editMode && !rearrangeMode){
+      const editCatBtn = document.createElement('div');
+      editCatBtn.className = 'edit-icon';
+      editCatBtn.textContent = '✎';
+      editCatBtn.title = 'Rename category';
+      editCatBtn.addEventListener('click', (e)=>{ e.stopPropagation(); startRenameCategory(d); });
+      d.appendChild(editCatBtn);
+      const delCatBtn = document.createElement('div');
+      delCatBtn.className = 'delete-icon';
+      delCatBtn.textContent = '🗑';
+      delCatBtn.title = 'Delete category';
+      delCatBtn.addEventListener('click', (e)=>{ e.stopPropagation(); deleteCategory(cat); });
+      d.appendChild(delCatBtn);
+    }
+    if(rearrangeMode){
+      d.draggable = true;
+      const handle = document.createElement('span');
+      handle.className = 'drag-handle';
+      handle.textContent = '≡';
+      d.prepend(handle);
+      d.addEventListener('dragstart', e=>{
+        e.dataTransfer.setData('text/plain', JSON.stringify({type:'cat', from: idx}));
+      });
+      d.addEventListener('dragover', e=>{e.preventDefault(); d.classList.add('drag-over');});
+      d.addEventListener('dragleave', ()=> d.classList.remove('drag-over'));
+      d.addEventListener('drop', e=>{
+        e.preventDefault();
+        d.classList.remove('drag-over');
+        const data = JSON.parse(e.dataTransfer.getData('text/plain')||'{}');
+        if(data.type==='cat' && data.from!==idx){
+          const moved = categoriesOrder.splice(data.from,1)[0];
+          categoriesOrder.splice(idx,0,moved);
+          markDirty();
+          saveData();
+          makeCategories();
+        }
+      });
+    }
+    d.addEventListener('click', ()=> setActive(cat));
+    d.addEventListener('keydown', (e)=> { if(e.key==='Enter') setActive(cat); });
+    categoriesEl.appendChild(d);
+  });
+}
+
+/* set active category and render phrases */
+function setActive(cat){
+  activeCategory = cat;
+  Array.from(categoriesEl.children).forEach(c => c.classList.toggle('active', c.textContent === cat));
+  renderCategory(cat);
+  // update heading text (main content title)
+  mainTitle.textContent = cat;
+  const mobileTitle = document.getElementById('mobileTitle'); if(mobileTitle) mobileTitle.textContent = cat;
+  addPhraseBtn.style.display = (cat && editMode) ? 'inline-flex' : 'none';
+  if(document.body.classList.contains('show-cats')) document.body.classList.remove('show-cats');
+}
+
+/* render category grid */
+function renderCategory(cat){
+  const arr = DATA[cat] || [];
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  arr.forEach((p, idx) => {
+    const pill = document.createElement('div');
+    pill.className = 'pill';
+    pill.tabIndex = 0;
+    pill.dataset.index = idx;
+    pill.dataset.cat = cat;
+  pill.innerText = p.engShort || p.eng;
+    if(editMode){
+      const ic = document.createElement('div');
+      ic.className = 'edit-icon';
+      ic.title = 'Edit phrase';
+      ic.textContent = '✎';
+      ic.addEventListener('click', (e)=>{e.stopPropagation(); togglePillEdit(pill,p);});
+      pill.appendChild(ic);
+      const del = document.createElement('div');
+      del.className = 'delete-icon';
+      del.title = 'Delete phrase';
+      del.textContent = '🗑';
+      del.addEventListener('click', (e)=>{ e.stopPropagation(); deletePhrase(cat, idx); });
+      pill.appendChild(del);
+    }
+    if(rearrangeMode){
+      pill.draggable = true;
+      pill.addEventListener('dragstart', e=>{
+        e.dataTransfer.setData('text/plain', JSON.stringify({type:'phrase', from: idx}));
+      });
+      pill.addEventListener('dragover', e=>{e.preventDefault(); pill.classList.add('drag-over');});
+      pill.addEventListener('dragleave', ()=> pill.classList.remove('drag-over'));
+      pill.addEventListener('drop', e=>{
+        e.preventDefault(); pill.classList.remove('drag-over');
+        const data = JSON.parse(e.dataTransfer.getData('text/plain')||'{}');
+        if(data.type==='phrase' && data.from!==idx){
+          const moved = arr.splice(data.from,1)[0];
+          arr.splice(idx,0,moved);
+          markDirty();
+          saveData();
+          renderCategory(cat);
+        }
+      });
+    }
+    // In edit mode: single click edits inline; double-click opens big overlay
+    pill.addEventListener('click', ()=> {
+      if(editMode){
+        if(!pill.classList.contains('editing')) togglePillEdit(pill,p);
+      } else {
+        openBig(p);
+      }
+    });
+    pill.addEventListener('dblclick', (e)=>{ e.stopPropagation(); openBig(p); });
+    pill.title = 'Click to inline edit; double-click for full view';
+    pill.addEventListener('keydown', (e)=> {
+      if(e.key==='Enter' || e.key===' '){
+        e.preventDefault();
+        if(editMode){
+          if(!pill.classList.contains('editing')) togglePillEdit(pill,p);
+        } else {
+          openBig(p);
+        }
+      }
+    });
+    grid.appendChild(pill);
+  });
+  contentEl.innerHTML = '';
+  contentEl.appendChild(grid);
+}
+
+/* open big overlay for a phrase */
+function openBig(p){
+  bigEng.textContent = p.eng || '';
+  bigHin.textContent = p.hin || '';
+  overlay.style.display = 'flex';
+  btnSpeak.focus();
+  currentPhrase = p;
+  injectBigEditButtons();
+}
+
+/* close overlay */
+function closeOverlay(){ overlay.style.display = 'none'; }
+
+/* search (shows results on right but doesn't change left highlight) */
+searchEl.addEventListener('input', ()=> {
+  const q = searchEl.value.trim().toLowerCase();
+  if(!q){
+    if(activeCategory) renderCategory(activeCategory);
+    else setActive(Object.keys(DATA)[0]);
+    return;
+  }
+  const results = [];
+  for(const [cat, arr] of Object.entries(DATA)){
+    for(const p of arr){
+  const combined = ((p.engShort||'') + ' ' + p.eng + ' ' + p.hin).toLowerCase();
+      if(combined.includes(q)) results.push({cat, p});
+    }
+  }
+  const grid = document.createElement('div'); grid.className = 'grid';
+  results.forEach(r => {
+    const pill = document.createElement('div'); pill.className='pill'; pill.tabIndex=0;
+  pill.innerText = r.p.engShort || r.p.eng;
+    // clicking/search result opens big view only — DOES NOT setActive(r.cat)
+    pill.addEventListener('click', ()=> openBig(r.p));
+    pill.addEventListener('keydown', (e)=> { if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openBig(r.p); }});
+    grid.appendChild(pill);
+  });
+  contentEl.innerHTML = `<div style="color:var(--muted);margin-bottom:8px">Search results: ${results.length} found</div>`;
+  contentEl.appendChild(grid);
+});
+
+/* Text-to-speech logic with animation (speaker pulses while any utterance is speaking) */
+let speakingCount = 0; // tracks active utterances
+function setSpeakingState(isSpeaking){
+  if(isSpeaking){
+    speakingCount++;
+  } else {
+    speakingCount = Math.max(0, speakingCount - 1);
+  }
+  if(speakingCount > 0) btnSpeak.classList.add('speaking');
+  else btnSpeak.classList.remove('speaking');
+}
+
+/* safe speak: speak English then Hindi (if present). Manage start/end to animate */
+function speakText(eng, hin){
+  if(!('speechSynthesis' in window)){
+    alert('Speech not supported on this device.');
+    return;
+  }
+  try{
+    window.speechSynthesis.cancel();
+  }catch(e){}
+  const hasHindi = /[\u0900-\u097F]/.test(hin || '');
+  const hasEnglish = /[A-Za-z0-9]/.test(eng || '');
+  function speakOne(text, lang){
+    return new Promise((resolve)=>{
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang;
+      u.rate = 0.95;
+      u.onstart = ()=> setSpeakingState(true);
+      u.onend = ()=> { setSpeakingState(false); resolve(); };
+      u.onerror = ()=> { setSpeakingState(false); resolve(); };
+      window.speechSynthesis.speak(u);
+    });
+  }
+  // speak sequentially
+  (async ()=>{
+    if(hasEnglish && hasHindi){
+      await speakOne(eng, 'en-US');
+      await speakOne(hin, 'hi-IN');
+    } else if(hasEnglish){
+      await speakOne(eng, 'en-US');
+    } else if(hasHindi){
+      await speakOne(hin, 'hi-IN');
+    } else {
+      await speakOne((eng||'') + ' ' + (hin||''), 'en-US');
+    }
+  })();
+}
+
+/* attach speak button */
+btnSpeak.addEventListener('click', ()=> speakText(bigEng.textContent, bigHin.textContent));
+
+/* copy */
+btnCopy.addEventListener('click', ()=> {
+  const txt = (bigEng.textContent || '') + (bigHin.textContent ? ' — ' + bigHin.textContent : '');
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).catch(()=>{});
+  // silent copy (no alert) — you can add a toast if you prefer
+});
+
+/* overlay close controls */
+btnBack.addEventListener('click', closeOverlay);
+overlay.addEventListener('click', (e)=> {
+  if(e.target === overlay){
+    if(unsavedChanges && overlay.querySelector('textarea[data-role="bigedit"]')){
+      if(!confirm('You have unsaved edits. Close anyway?')) return;
+    }
+    closeOverlay();
+  }
+});
+document.addEventListener('keydown', (e)=> { if(e.key==='Escape') closeOverlay(); });
+
+/* Heading font size controls (persist in localStorage) */
+const FONT_KEY = 'easyEnglish_heading_font';
+function applySavedFont(){
+  const v = parseInt(localStorage.getItem(FONT_KEY) || '22', 10);
+  mainTitle.style.fontSize = v + 'px';
+}
+incFont.addEventListener('click', ()=> {
+  const cur = parseInt(getComputedStyle(mainTitle).fontSize,10) || 22;
+  const next = Math.min(48, cur + 2);
+  mainTitle.style.fontSize = next + 'px';
+  localStorage.setItem(FONT_KEY, next);
+});
+decFont.addEventListener('click', ()=> {
+  const cur = parseInt(getComputedStyle(mainTitle).fontSize,10) || 22;
+  const next = Math.max(16, cur - 2);
+  mainTitle.style.fontSize = next + 'px';
+  localStorage.setItem(FONT_KEY, next);
+});
+applySavedFont();
+
+/* toggle settings menu */
+let settingsOpen = false;
+function closeSettings(){ settingsMenu.style.display='none'; settingsOpen=false; }
+function openSettings(){ settingsMenu.style.display='flex'; settingsOpen=true; }
+settingsBtn.addEventListener('click', (e)=> {
+  e.stopPropagation();
+  settingsOpen ? closeSettings() : openSettings();
+});
+// Mobile settings button mirrors desktop one
+if(mobileSettingsBtn){
+  mobileSettingsBtn.addEventListener('click', (e)=>{ e.stopPropagation(); settingsOpen ? closeSettings() : openSettings(); });
+}
+// Hamburger toggles sidebar visibility on small screens
+if(hamburger){
+  hamburger.addEventListener('click', (e)=>{ e.stopPropagation(); document.body.classList.toggle('show-cats'); });
+  // Close sidebar when tapping outside
+  document.addEventListener('click', (e)=>{
+    if(document.body.classList.contains('show-cats')){
+      const sb = document.querySelector('.sidebar');
+      if(sb && !sb.contains(e.target) && e.target!==hamburger){
+        document.body.classList.remove('show-cats');
+      }
+    }
+  });
+}
+document.addEventListener('click', e=>{
+  if(settingsOpen && !settingsMenu.contains(e.target) && e.target!==settingsBtn){
+    closeSettings();
+  }
+});
+document.addEventListener('keydown', e=> { if(e.key==='Escape' && settingsOpen) closeSettings(); });
+
+/* dark mode */
+toggleDark.addEventListener('click', ()=>{
+  document.body.classList.toggle('dark');
+  const on = document.body.classList.contains('dark');
+  toggleDark.classList.toggle('active', on);
+  localStorage.setItem(DARK_KEY, on ? '1':'0');
+});
+
+/* edit mode */
+toggleEdit.addEventListener('click', ()=>{
+  editMode = !editMode;
+  toggleEdit.classList.toggle('active', editMode);
+  document.body.classList.toggle('edit-mode', editMode);
+  addCategoryBtn.style.display = editMode ? 'block' : 'none';
+  addPhraseBtn.style.display = (activeCategory && editMode) ? 'inline-flex' : 'none';
+  modeDoneBtn.style.display = (editMode || rearrangeMode) ? 'inline-flex':'none';
+  makeCategories();
+  if(activeCategory) renderCategory(activeCategory); else setActive(categoriesOrder[0]);
+});
+
+/* rearrange mode */
+toggleRearrange.addEventListener('click', ()=>{
+  rearrangeMode = !rearrangeMode;
+  toggleRearrange.classList.toggle('active', rearrangeMode);
+  document.body.classList.toggle('rearrange-mode', rearrangeMode);
+  // hide add buttons during rearrange unless also in edit (keep per spec: only edit mode shows them)
+  addCategoryBtn.style.display = (editMode && !rearrangeMode)? 'block':'none';
+  addPhraseBtn.style.display = (activeCategory && editMode && !rearrangeMode)? 'inline-flex':'none';
+  modeDoneBtn.style.display = (editMode || rearrangeMode) ? 'inline-flex':'none';
+  makeCategories();
+  if(activeCategory) renderCategory(activeCategory); else setActive(categoriesOrder[0]);
+});
+
+/* add category */
+addCategoryBtn.addEventListener('click', ()=>{
+  const name = prompt('New category name:');
+  if(!name) return;
+  if(DATA[name]){alert('Category exists');return;}
+  DATA[name] = [];
+  categoriesOrder.push(name);
+  makeCategories();
+  setActive(name);
+  markDirty();
+  saveData();
+  // optional first phrase
+  const first = prompt('Add an English phrase for this new category (optional):');
+  if(first){
+    autoAddPhrase(first, name);
+  }
+});
+
+/* pill edit toggle */
+function togglePillEdit(pill, phrase){
+  if(pill.classList.contains('editing')){
+  return; // already editing
+  }
+  pill.classList.add('editing');
+  const orig = phrase.engShort || phrase.eng;
+  pill.innerHTML = '';
+  const row = document.createElement('div');
+  row.style.display='flex';
+  row.style.alignItems='center';
+  row.style.width='100%';
+  row.style.gap='6px';
+  const input = document.createElement('input');
+  input.type='text';
+  input.value = orig;
+  input.style.width='100%';
+  input.style.fontSize='16px';
+  input.style.padding='6px 10px';
+  input.style.border='1px solid var(--pill-border)';
+  input.style.borderRadius='8px';
+  const saveBtn = document.createElement('button');
+  saveBtn.type='button';
+  saveBtn.className='inline-save';
+  saveBtn.textContent='Save';
+  saveBtn.addEventListener('click', (e)=>{ e.stopPropagation(); savePillEdit(pill, phrase); });
+  row.appendChild(saveBtn);
+  row.appendChild(input);
+  pill.appendChild(row);
+  input.focus();
+  pill.dataset.editing = '1';
+  markDirty();
+  saveData();
+}
+
+function savePillEdit(pill, phrase){
+  if(!pill.classList.contains('editing')) return; // nothing to save
+  const input = pill.querySelector('input');
+  if(!input) return;
+  const newVal = input.value.trim();
+  if(newVal) phrase.engShort = newVal; // only update short label
+  pill.classList.remove('editing');
+  pill.innerHTML = phrase.engShort || phrase.eng;
+  // re-add icons if still in edit mode
+  if(editMode){
+    const ic = document.createElement('div'); ic.className='edit-icon'; ic.textContent='✎'; ic.title='Edit phrase'; ic.addEventListener('click',(e)=>{e.stopPropagation(); togglePillEdit(pill,phrase);}); pill.appendChild(ic);
+    const del = document.createElement('div'); del.className='delete-icon'; del.textContent='🗑'; del.title='Delete phrase'; del.addEventListener('click',(e)=>{e.stopPropagation(); deletePhrase(pill.dataset.cat, parseInt(pill.dataset.index,10));}); pill.appendChild(del);
+  pill.addEventListener('dblclick', (e)=>{ e.stopPropagation(); openBig(phrase); });
+  pill.title = 'Click to inline edit; double-click for full view';
+  }
+}
+
+/* big edit buttons */
+function injectBigEditButtons(){
+  // remove existing
+  const existing = document.querySelector('.big-edit-wrap');
+  if(existing) existing.remove();
+  if(!editMode){return;}
+  const wrap = document.createElement('div');
+  wrap.className = 'big-edit-wrap';
+  const btnE = document.createElement('button'); btnE.className='big-edit-btn'; btnE.textContent='✎ EN'; btnE.addEventListener('click', ()=> toggleBigEdit(bigEng,'eng'));
+  const btnES = document.createElement('button'); btnES.className='big-edit-btn'; btnES.textContent='💾 EN'; btnES.addEventListener('click', ()=> saveBigEdit('eng'));
+  const btnH = document.createElement('button'); btnH.className='big-edit-btn'; btnH.textContent='✎ HI'; btnH.addEventListener('click', ()=> toggleBigEdit(bigHin,'hin'));
+  const btnHS = document.createElement('button'); btnHS.className='big-edit-btn'; btnHS.textContent='💾 HI'; btnHS.addEventListener('click', ()=> saveBigEdit('hin'));
+  const btnSync = document.createElement('button'); btnSync.className='big-edit-btn'; btnSync.textContent='⟳ Sync Label'; btnSync.title='Copy full English into the small card label'; btnSync.addEventListener('click', ()=> { if(currentPhrase){ currentPhrase.engShort = currentPhrase.eng; if(activeCategory) renderCategory(activeCategory); }});
+  wrap.append(btnE, btnES, btnH, btnHS, btnSync);
+  overlay.querySelector('.bigcard').appendChild(wrap);
+}
+
+function toggleBigEdit(el, field){
+  if(el.dataset.editing==='1'){return;} // single edit instance
+  const text = el.textContent;
+  const area = document.createElement('textarea');
+  area.value = text;
+  area.style.width='100%';
+  area.style.minHeight='60px';
+  area.style.fontSize= field==='eng'? '32px':'18px';
+  area.style.fontWeight= field==='eng'? '800':'400';
+  area.style.lineHeight='1.15';
+  el.replaceWith(area);
+  area.className = 'big-editing';
+  area.dataset.field = field;
+  area.dataset.original = text;
+  area.dataset.role = 'bigedit';
+  markDirty();
+}
+
+function saveBigEdit(field){
+  const area = overlay.querySelector('textarea.big-editing[data-field="'+field+'"]');
+  if(!area || !currentPhrase) return;
+  const val = area.value.trim();
+  currentPhrase[field] = val || currentPhrase[field];
+  const div = document.createElement('div');
+  div.id = field==='eng' ? 'bigEng':'bigHin';
+  div.className = field==='eng' ? 'big-eng':'big-hin';
+  div.textContent = currentPhrase[field];
+  area.replaceWith(div);
+  if(field==='eng') bigEng = div; else bigHin = div;
+  // Do NOT auto update pill label to keep independence; user can press Sync Label
+  saveData();
+}
+
+/* mark changes */
+function markDirty(){
+  unsavedChanges = true;
+  saveAllBtn.classList.add('dirty');
+}
+
+/* Category rename start */
+function startRenameCategory(catDiv){
+  if(catDiv.dataset.renaming==='1') return;
+  const orig = catDiv.dataset.cat;
+  catDiv.dataset.renaming='1';
+  catDiv.dataset.original=orig;
+  catDiv.innerHTML='';
+  const row = document.createElement('div');
+  row.style.display='flex';
+  row.style.alignItems='center';
+  row.style.gap='6px';
+  const saveBtn = document.createElement('button');
+  saveBtn.type='button';
+  saveBtn.className='inline-save';
+  saveBtn.textContent='Save';
+  saveBtn.addEventListener('click', (e)=>{ e.stopPropagation(); commitCategoryRename(catDiv); });
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type='button';
+  cancelBtn.style.background='transparent';
+  cancelBtn.style.border='0';
+  cancelBtn.style.cursor='pointer';
+  cancelBtn.style.color='var(--muted)';
+  cancelBtn.style.fontWeight='600';
+  cancelBtn.textContent='✕';
+  cancelBtn.title='Cancel';
+  cancelBtn.addEventListener('click', (e)=>{ e.stopPropagation(); catDiv.dataset.renaming='0'; makeCategories(); if(activeCategory) setActive(activeCategory); });
+  const input=document.createElement('input');
+  input.type='text';
+  input.value=orig;
+  input.setAttribute('data-role','renameCat');
+  input.style.width='100%';
+  input.style.padding='6px 8px';
+  input.style.fontSize='15px';
+  input.style.border='1px solid var(--pill-border)';
+  input.style.borderRadius='8px';
+  row.append(saveBtn,input,cancelBtn);
+  catDiv.appendChild(row);
+  input.focus();
+  input.select();
+  markDirty();
+}
+
+function commitCategoryRename(catDiv){
+  if(catDiv.dataset.renaming!=='1') return;
+  const oldName = catDiv.dataset.original;
+  const input = catDiv.querySelector('input');
+  if(!input) return;
+  const newName = input.value.trim();
+  if(!newName || newName===oldName){ makeCategories(); if(activeCategory===oldName) setActive(oldName); return; }
+  if(DATA[newName]){ alert('Category "'+newName+'" already exists, skipping rename.'); return; }
+  DATA[newName] = DATA[oldName]; delete DATA[oldName];
+  categoriesOrder = categoriesOrder.map(c=> c===oldName? newName:c);
+  if(activeCategory===oldName) activeCategory=newName;
+  makeCategories();
+  if(activeCategory) setActive(activeCategory);
+  saveData();
+}
+
+/* Delete category */
+function deleteCategory(name){
+  if(!confirm('Delete category "'+name+'" and all its phrases?')) return;
+  // remove from DATA and order
+  delete DATA[name];
+  categoriesOrder = categoriesOrder.filter(c => c !== name);
+  if(activeCategory === name){
+    activeCategory = categoriesOrder[0] || null;
+    if(activeCategory){
+      setActive(activeCategory);
+    } else {
+      contentEl.innerHTML = '<div style="color:var(--muted)">No categories. Use + Add Category.</div>';
+      mainTitle.textContent = 'Select a topic';
+    }
+  } else {
+    makeCategories();
+  }
+  markDirty();
+}
+
+/* Delete phrase */
+function deletePhrase(cat, index){
+  if(!DATA[cat] || !DATA[cat][index]) return;
+  if(!confirm('Delete this phrase?')) return;
+  DATA[cat].splice(index,1);
+  if(activeCategory === cat) renderCategory(cat);
+  markDirty();
+  saveData();
+}
+
+/* Auto translation (simple client-side via public API; fallback to original on failure) */
+async function translateENtoHI(text){
+  const endpoint = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|hi';
+  try{
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 6000);
+    const res = await fetch(endpoint, {signal: ctrl.signal});
+    clearTimeout(t);
+    if(!res.ok) throw new Error('net');
+    const json = await res.json();
+    const translated = (json && json.responseData && json.responseData.translatedText) ? json.responseData.translatedText.trim() : '';
+    return translated || text; // fallback
+  }catch(e){
+    return text; // fallback if error
+  }
+}
+
+/* Add phrase helper */
+async function autoAddPhrase(engPhrase, cat){
+  const c = cat || activeCategory;
+  if(!c) return;
+  const placeholder = {eng: engPhrase, engShort: engPhrase, hin: 'Translating…'};
+  DATA[c].push(placeholder);
+  renderCategory(c);
+  markDirty();
+  saveData();
+  const translated = await translateENtoHI(engPhrase);
+  placeholder.hin = translated;
+  // if still in same category view, re-render to update translation
+  if(activeCategory === c){
+    renderCategory(c);
+  }
+  saveData();
+}
+
+addPhraseBtn.addEventListener('click', async ()=>{
+  if(!activeCategory) return;
+  const eng = prompt('Enter English phrase:');
+  if(!eng) return;
+  await autoAddPhrase(eng, activeCategory);
+});
+
+/* Save all handler */
+// Done button finalizes any open edits (committing) then exits modes
+modeDoneBtn.addEventListener('click', ()=>{
+  // commit pill edits
+  document.querySelectorAll('.pill.editing').forEach(pill=>{
+    const cat = pill.dataset.cat; const idx = parseInt(pill.dataset.index,10);
+    const phrase = DATA[cat][idx]; savePillEdit(pill, phrase);
+  });
+  // commit category renames
+  document.querySelectorAll('.cat[data-renaming="1"]').forEach(catDiv=> commitCategoryRename(catDiv));
+  // commit big edits
+  overlay.querySelectorAll('textarea.big-editing').forEach(area=>{ saveBigEdit(area.dataset.field); });
+  // re-render active category one more time to ensure synced view
+  if(activeCategory) renderCategory(activeCategory);
+  saveData();
+  editMode=false; rearrangeMode=false;
+  document.body.classList.remove('edit-mode','rearrange-mode');
+  toggleEdit.classList.remove('active');
+  toggleRearrange.classList.remove('active');
+  addCategoryBtn.style.display='none';
+  addPhraseBtn.style.display='none';
+  modeDoneBtn.style.display='none';
+  makeCategories(); if(activeCategory) setActive(activeCategory);
+});
+
+/* Prevent accidental navigation away */
+window.addEventListener('beforeunload', (e)=>{
+  if(unsavedChanges){ e.preventDefault(); e.returnValue=''; }
+});
+
+/* Reset to default */
+resetAllBtn.addEventListener('click', ()=>{
+  if(!confirm('Reset all data and settings to default?')) return;
+  // Clear current data
+  for(const k of Object.keys(DATA)) delete DATA[k];
+  Object.entries(ORIGINAL_DATA).forEach(([k,v])=>{ DATA[k] = JSON.parse(JSON.stringify(v)); });
+  categoriesOrder = Object.keys(DATA);
+  activeCategory = categoriesOrder[0] || null;
+  // reset modes & UI state
+  editMode=false; rearrangeMode=false; unsavedChanges=false;
+  document.body.classList.remove('edit-mode','rearrange-mode');
+  toggleEdit.classList.remove('active');
+  toggleRearrange.classList.remove('active');
+  addCategoryBtn.style.display='none';
+  addPhraseBtn.style.display='none';
+  // clear prefs
+  localStorage.removeItem('easyEnglish_heading_font');
+  localStorage.removeItem('easyEnglish_dark');
+  document.body.classList.remove('dark');
+  toggleDark.classList.remove('active');
+  saveAllBtn.classList.remove('dirty');
+  makeCategories();
+  if(activeCategory) setActive(activeCategory); else { contentEl.innerHTML='<div style="color:var(--muted)">No categories.</div>'; mainTitle.textContent='Select a topic'; }
+  applySavedFont();
+  saveData();
+});
+
+/* init */
+makeCategories();
+setActive(Object.keys(DATA)[0]);
+</script>
+<!-- save btn element already appended dynamically -->
+</body>
+</html>
