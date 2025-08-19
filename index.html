@@ -247,7 +247,7 @@ if ('serviceWorker' in navigator) {
         <div id="bigEng" class="big-eng" aria-live="polite"></div>
         <div id="bigHin" class="big-hin"></div>
       </div>
-      <button id="btnSpeak" class="speaker-btn" aria-label="Speak (English then Hindi)">
+  <button id="btnSpeak" class="speaker-btn" aria-label="Speak English">
         <!-- speaker SVG -->
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M5 9v6h4l5 4V5L9 9H5z" fill="#2b6cb0"/>
@@ -680,41 +680,22 @@ function setSpeakingState(isSpeaking){
   else btnSpeak.classList.remove('speaking');
 }
 
-/* safe speak: speak English then Hindi (if present). Manage start/end to animate */
+/* safe speak: speak ONLY English main phrase (ignore Hindi) */
 function speakText(eng, hin){
   if(!('speechSynthesis' in window)){
     alert('Speech not supported on this device.');
     return;
   }
-  try{
-    window.speechSynthesis.cancel();
-  }catch(e){}
-  const hasHindi = /[\u0900-\u097F]/.test(hin || '');
-  const hasEnglish = /[A-Za-z0-9]/.test(eng || '');
-  function speakOne(text, lang){
-    return new Promise((resolve)=>{
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang;
-      u.rate = 0.95;
-      u.onstart = ()=> setSpeakingState(true);
-      u.onend = ()=> { setSpeakingState(false); resolve(); };
-      u.onerror = ()=> { setSpeakingState(false); resolve(); };
-      window.speechSynthesis.speak(u);
-    });
-  }
-  // speak sequentially
-  (async ()=>{
-    if(hasEnglish && hasHindi){
-      await speakOne(eng, 'en-US');
-      await speakOne(hin, 'hi-IN');
-    } else if(hasEnglish){
-      await speakOne(eng, 'en-US');
-    } else if(hasHindi){
-      await speakOne(hin, 'hi-IN');
-    } else {
-      await speakOne((eng||'') + ' ' + (hin||''), 'en-US');
-    }
-  })();
+  try{ window.speechSynthesis.cancel(); }catch(e){}
+  const phrase = eng && /[A-Za-z0-9]/.test(eng) ? eng : (hin || '');
+  if(!phrase.trim()) return;
+  const u = new SpeechSynthesisUtterance(phrase);
+  u.lang = 'en-US';
+  u.rate = 0.95;
+  u.onstart = ()=> setSpeakingState(true);
+  const done = ()=> { setSpeakingState(false); };
+  u.onend = done; u.onerror = done;
+  window.speechSynthesis.speak(u);
 }
 
 /* attach speak button */
