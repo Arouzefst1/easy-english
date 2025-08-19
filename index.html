@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<!-- Prevent user zooming (may impact accessibility) -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 <title>Easy English — English + Hindi</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0b1220">
@@ -449,7 +450,29 @@ function makeCategories(){
       const btn = document.createElement('button');
       btn.type='button';
       btn.textContent = cat;
+      btn.dataset.cat = cat;
       btn.addEventListener('click', ()=> setActive(cat));
+      // Drag support in rearrange mode for mobile cat bar
+      if(rearrangeMode){
+        btn.draggable = true;
+        btn.addEventListener('dragstart', e=>{
+          e.dataTransfer.setData('text/plain', JSON.stringify({type:'cat', from: idx}));
+        });
+        btn.addEventListener('dragover', e=>{ e.preventDefault(); btn.classList.add('drag-over'); });
+        btn.addEventListener('dragleave', ()=> btn.classList.remove('drag-over'));
+        btn.addEventListener('drop', e=>{
+          e.preventDefault(); btn.classList.remove('drag-over');
+          const data = JSON.parse(e.dataTransfer.getData('text/plain')||'{}');
+          if(data.type==='cat' && data.from!==idx){
+            const moved = categoriesOrder.splice(data.from,1)[0];
+            categoriesOrder.splice(idx,0,moved);
+            markDirty();
+            saveData();
+            makeCategories();
+            if(activeCategory) setActive(activeCategory);
+          }
+        });
+      }
       mobileCatBar.appendChild(btn);
     }
     // Bottom sheet list item (Android phone)
@@ -457,7 +480,51 @@ function makeCategories(){
       const sc = document.createElement('div');
       sc.className = 'sheet-cat';
       sc.textContent = cat;
-      sc.addEventListener('click', ()=> { setActive(cat); document.body.classList.remove('show-bottom-cats'); });
+      sc.dataset.cat = cat;
+      sc.style.position = 'relative';
+      sc.addEventListener('click', (e)=> {
+        // If clicking on edit/delete icons, ignore default activation close
+        if(e.target.closest('.edit-icon') || e.target.closest('.delete-icon')) return;
+        setActive(cat); document.body.classList.remove('show-bottom-cats');
+      });
+      // Edit icons for bottom sheet in edit mode
+      if(editMode && !rearrangeMode){
+        const editCatBtn = document.createElement('div');
+        editCatBtn.className = 'edit-icon';
+        editCatBtn.textContent = '✎';
+        editCatBtn.title = 'Rename category';
+        editCatBtn.style.opacity = '1'; // always visible in sheet
+        editCatBtn.addEventListener('click', (e)=>{ e.stopPropagation(); startRenameCategory(sc); });
+        const delCatBtn = document.createElement('div');
+        delCatBtn.className = 'delete-icon';
+        delCatBtn.textContent = '🗑';
+        delCatBtn.title = 'Delete category';
+        delCatBtn.style.opacity = '1';
+        delCatBtn.addEventListener('click', (e)=>{ e.stopPropagation(); deleteCategory(cat); });
+        sc.appendChild(editCatBtn);
+        sc.appendChild(delCatBtn);
+      }
+      // Drag support when rearranging
+      if(rearrangeMode){
+        sc.draggable = true;
+        sc.addEventListener('dragstart', e=>{
+          e.dataTransfer.setData('text/plain', JSON.stringify({type:'cat', from: idx}));
+        });
+        sc.addEventListener('dragover', e=>{ e.preventDefault(); sc.classList.add('drag-over'); });
+        sc.addEventListener('dragleave', ()=> sc.classList.remove('drag-over'));
+        sc.addEventListener('drop', e=>{
+          e.preventDefault(); sc.classList.remove('drag-over');
+          const data = JSON.parse(e.dataTransfer.getData('text/plain')||'{}');
+          if(data.type==='cat' && data.from!==idx){
+            const moved = categoriesOrder.splice(data.from,1)[0];
+            categoriesOrder.splice(idx,0,moved);
+            markDirty();
+            saveData();
+            makeCategories();
+            if(activeCategory) setActive(activeCategory);
+          }
+        });
+      }
       sheetCats.appendChild(sc);
     }
   });
@@ -565,8 +632,13 @@ function openBig(p){
   injectBigEditButtons();
 }
 
-/* close overlay */
-function closeOverlay(){ overlay.style.display = 'none'; }
+/* close overlay (also stop any ongoing speech) */
+function closeOverlay(){
+  overlay.style.display = 'none';
+  try{ if('speechSynthesis' in window){ window.speechSynthesis.cancel(); } }catch(e){}
+  speakingCount = 0;
+  btnSpeak.classList.remove('speaking');
+}
 
 /* search (shows results on right but doesn't change left highlight) */
 searchEl.addEventListener('input', ()=> {
@@ -699,6 +771,14 @@ settingsBtn.addEventListener('click', (e)=> {
 if(mobileSettingsBtn){
   mobileSettingsBtn.addEventListener('click', (e)=>{ e.stopPropagation(); settingsOpen ? closeSettings() : openSettings(); });
 }
+// Auto-close settings menu when a menu button is clicked
+settingsMenu.addEventListener('click', (e)=>{
+  const btn = e.target.closest('button');
+  if(btn){
+    // Delay to allow the button's own handler to run first
+    setTimeout(()=>{ if(settingsOpen) closeSettings(); }, 0);
+  }
+});
 // Hamburger toggles sidebar visibility on small screens
 if(hamburger){
   hamburger.addEventListener('click', (e)=>{ e.stopPropagation(); document.body.classList.toggle('show-cats'); });
@@ -820,6 +900,9 @@ function savePillEdit(pill, phrase){
   pill.addEventListener('dblclick', (e)=>{ e.stopPropagation(); openBig(phrase); });
   pill.title = 'Click to inline edit; double-click for full view';
   }
+  // persist edit after saving
+  markDirty();
+  saveData();
 }
 
 /* big edit buttons */
@@ -954,6 +1037,7 @@ function deleteCategory(name){
     makeCategories();
   }
   markDirty();
+  saveData();
 }
 
 /* Delete phrase */
@@ -1094,6 +1178,66 @@ setActive(Object.keys(DATA)[0]);
     makeCategories(); if(activeCategory) setActive(activeCategory);
   }
 })();
+
+/* ---- Hardening: attempt to block zoom & common devtool shortcuts ----
+   Note: These measures are deterrents only; users can still open dev tools.
+*/
+// Disable context menu (right click)
+document.addEventListener('contextmenu', e=>{ e.preventDefault(); }, {capture:true});
+
+// Block Ctrl/Cmd + + / - / = / 0 (zoom in/out/reset), Ctrl+wheel zoom
+document.addEventListener('keydown', e=>{
+  const k = e.key.toLowerCase();
+  if((e.ctrlKey || e.metaKey) && ['+','-','=','0'].includes(k)){
+    e.preventDefault();
+  }
+  // Block developer tool shortcuts (F12, Ctrl+Shift+I/J/C, Ctrl+Shift+K)
+  if(
+    k === 'f12' ||
+    (e.ctrlKey && e.shiftKey && ['i','j','c','k'].includes(k)) ||
+    (e.metaKey && e.altKey && k === 'i') // mac variant
+  ){
+    e.preventDefault();
+  }
+}, {capture:true});
+
+// Block Ctrl/Cmd + Scroll zoom
+document.addEventListener('wheel', e=>{
+  if(e.ctrlKey){
+    e.preventDefault();
+  }
+},{passive:false});
+
+// Block pinch zoom (multi-touch scale) & double-tap zoom heuristics
+let lastTouchEnd = 0;
+document.addEventListener('touchend', e=>{
+  const now = Date.now();
+  if(now - lastTouchEnd <= 350){
+    e.preventDefault(); // prevent double-tap zoom
+  }
+  lastTouchEnd = now;
+}, {passive:false});
+
+let pinchStartDistance = null;
+function getDistance(touches){
+  const [a,b] = touches; const dx = a.pageX - b.pageX; const dy = a.pageY - b.pageY; return Math.hypot(dx,dy);
+}
+document.addEventListener('touchstart', e=>{
+  if(e.touches.length === 2){
+    pinchStartDistance = getDistance(e.touches);
+  } else {
+    pinchStartDistance = null;
+  }
+}, {passive:false});
+document.addEventListener('touchmove', e=>{
+  if(e.touches.length === 2 && pinchStartDistance){
+    const dist = getDistance(e.touches);
+    // If distance changes significantly, treat as pinch and block
+    if(Math.abs(dist - pinchStartDistance) > 10){
+      e.preventDefault();
+    }
+  }
+}, {passive:false});
 </script>
 <!-- save btn element already appended dynamically -->
 </body>
