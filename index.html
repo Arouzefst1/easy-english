@@ -159,6 +159,22 @@ if ('serviceWorker' in navigator) {
     #mobileCatBar button{flex:0 0 auto;margin:0;padding:6px 12px;border-radius:18px;font-size:13px;font-weight:600;border:1px solid var(--pill-border);background:var(--pill-bg);color:var(--pill-fg);cursor:pointer;transition:.2s}
     #mobileCatBar button.active{background:#2b6cb0;color:#fff;border-color:#2b6cb0}
     body.dark #mobileCatBar button.active{background:#1e4475}
+
+    /* Android phone specific bottom sheet + FAB (not tablets) */
+    #fabCategories{display:none;position:fixed;right:16px;bottom:16px;width:62px;height:62px;border-radius:50%;background:#2b6cb0;color:#fff;font-size:30px;font-weight:700;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px -4px rgba(0,0,0,.5);z-index:600;border:0}
+    body.dark #fabCategories{background:#1e4475}
+    body.android-phone #fabCategories{display:flex}
+    #bottomSheetCats{position:fixed;left:0;right:0;bottom:0;max-height:70%;background:var(--panel);border-top:1px solid var(--pill-border);box-shadow:0 -8px 28px -6px rgba(0,0,0,.55);z-index:590;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,.0,.2,1)}
+    body.android-phone.show-bottom-cats #bottomSheetCats{transform:translateY(0)}
+    #bottomSheetCats .sheet-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;font-weight:700;font-size:16px;border-bottom:1px solid var(--pill-border)}
+    #bottomSheetCats .sheet-header button{background:none;border:0;font-size:22px;cursor:pointer;color:var(--pill-fg)}
+    #sheetCatsScroll{overflow-y:auto;padding:10px 14px 24px}
+    #sheetCatsScroll .sheet-cat{padding:10px 14px;margin:0 0 8px;border-radius:14px;background:var(--pill-bg);border:1px solid var(--pill-border);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+    #sheetCatsScroll .sheet-cat.active{background:#2b6cb0;color:#fff;border-color:#2b6cb0}
+    body.dark #sheetCatsScroll .sheet-cat.active{background:#1e4475}
+    body.android-phone .sidebar{display:none !important}
+    body.android-phone #mobileCatBar{display:none !important}
+    body.android-phone .main{padding-top:54px} /* top bar only for android phone */
   #mobileTitle{font-size:16px;font-weight:700;margin:0}
 </style>
 </head>
@@ -171,6 +187,11 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 <div id="mobileCatBar" role="tablist" aria-label="Categories (mobile)"></div>
+<button id="fabCategories" aria-label="Show categories">☰</button>
+<div id="bottomSheetCats" role="dialog" aria-label="Categories panel" aria-modal="false">
+  <div class="sheet-header">Categories <button id="closeSheetCats" aria-label="Close">×</button></div>
+  <div id="sheetCatsScroll"></div>
+</div>
 <div class="app">
   <aside class="sidebar" aria-label="Topics">
     <div class="title">Easy English</div>
@@ -373,6 +394,8 @@ function makeCategories(){
   categoriesEl.innerHTML = '';
   const mobileCatBar = document.getElementById('mobileCatBar');
   if(mobileCatBar) mobileCatBar.innerHTML='';
+  const sheetCats = document.getElementById('sheetCatsScroll');
+  if(sheetCats) sheetCats.innerHTML='';
   categoriesOrder.forEach((cat, idx)=>{
     const d = document.createElement('div');
     d.className = 'cat';
@@ -429,6 +452,14 @@ function makeCategories(){
       btn.addEventListener('click', ()=> setActive(cat));
       mobileCatBar.appendChild(btn);
     }
+    // Bottom sheet list item (Android phone)
+    if(sheetCats){
+      const sc = document.createElement('div');
+      sc.className = 'sheet-cat';
+      sc.textContent = cat;
+      sc.addEventListener('click', ()=> { setActive(cat); document.body.classList.remove('show-bottom-cats'); });
+      sheetCats.appendChild(sc);
+    }
   });
 }
 
@@ -446,6 +477,11 @@ function setActive(cat){
   const mobileTitle = document.getElementById('mobileTitle'); if(mobileTitle) mobileTitle.textContent = cat;
   addPhraseBtn.style.display = (cat && editMode) ? 'inline-flex' : 'none';
   if(document.body.classList.contains('show-cats')) document.body.classList.remove('show-cats');
+  // Highlight sheet items
+  const sheetCats = document.getElementById('sheetCatsScroll');
+  if(sheetCats){
+    Array.from(sheetCats.children).forEach(c => c.classList.toggle('active', c.textContent===cat));
+  }
 }
 
 /* render category grid */
@@ -1032,6 +1068,32 @@ resetAllBtn.addEventListener('click', ()=>{
 /* init */
 makeCategories();
 setActive(Object.keys(DATA)[0]);
+
+// Android phone bottom sheet logic
+(function(){
+  const ua = navigator.userAgent.toLowerCase();
+  const isAndroid = ua.includes('android');
+  const isTablet = /tablet|sm-t|ipad|xoom|silk|kindle|playbook/.test(ua) || (window.innerWidth >= 900);
+  if(isAndroid && !isTablet){
+    document.body.classList.add('android-phone');
+    const fab = document.getElementById('fabCategories');
+    const sheet = document.getElementById('bottomSheetCats');
+    const closeBtn = document.getElementById('closeSheetCats');
+    if(fab){
+      fab.addEventListener('click', (e)=>{ e.stopPropagation(); document.body.classList.toggle('show-bottom-cats'); });
+    }
+    if(closeBtn){ closeBtn.addEventListener('click', ()=> document.body.classList.remove('show-bottom-cats')); }
+    document.addEventListener('click', (e)=>{
+      if(document.body.classList.contains('show-bottom-cats')){
+        if(sheet && !sheet.contains(e.target) && e.target!==fab){
+          document.body.classList.remove('show-bottom-cats');
+        }
+      }
+    });
+    // Rebuild categories to ensure bottom sheet list populated
+    makeCategories(); if(activeCategory) setActive(activeCategory);
+  }
+})();
 </script>
 <!-- save btn element already appended dynamically -->
 </body>
