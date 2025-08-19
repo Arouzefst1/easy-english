@@ -145,14 +145,20 @@ if ('serviceWorker' in navigator) {
     .sidebar{display:none;position:fixed;top:0;left:0;bottom:0;width:80%;max-width:300px;z-index:500;border-right:1px solid #1e2b40;border-bottom:0;padding-top:60px;box-shadow:0 0 0 9999px rgba(0,0,0,0.45)}
     body.show-cats .sidebar{display:block;}
     .app{flex-direction:column}
-    .main{padding-top:54px}
+      .main{padding-top:108px}
     .grid{grid-template-columns:1fr}
     .big-eng{font-size:28px}
     #mobileTopBar{display:flex}
+      #mobileCatBar{display:flex}
   }
   .hamburger{display:none;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:#eef4ff;border:0;font-size:20px;font-weight:700;cursor:pointer}
   body.dark .hamburger{background:#1e2e46;color:#5da9ff}
   #mobileTopBar{position:fixed;left:0;top:0;right:0;height:54px;display:none;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--pill-border);z-index:480}
+    #mobileCatBar{position:fixed;left:0;top:54px;right:0;display:none;align-items:center;gap:8px;padding:6px 10px 10px;background:var(--panel);border-bottom:1px solid var(--pill-border);z-index:470;overflow-x:auto;scrollbar-width:thin}
+    #mobileCatBar::-webkit-scrollbar{height:6px}
+    #mobileCatBar button{flex:0 0 auto;margin:0;padding:6px 12px;border-radius:18px;font-size:13px;font-weight:600;border:1px solid var(--pill-border);background:var(--pill-bg);color:var(--pill-fg);cursor:pointer;transition:.2s}
+    #mobileCatBar button.active{background:#2b6cb0;color:#fff;border-color:#2b6cb0}
+    body.dark #mobileCatBar button.active{background:#1e4475}
   #mobileTitle{font-size:16px;font-weight:700;margin:0}
 </style>
 </head>
@@ -164,6 +170,7 @@ if ('serviceWorker' in navigator) {
     <button id="mobileSettingsBtn" aria-label="Settings" style="background:#eef4ff;border:0;border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6c.26 0 .51-.05.74-.14A1.65 1.65 0 0 0 10.6 3.4V3a2 2 0 1 1 4 0v.09c0 .69.4 1.31 1.02 1.6.23.09.48.14.74.14a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c0 .26.05.51.14.74.29.62.91 1.02 1.6 1.02H21a2 2 0 1 1 0 4h-.09c-.69 0-1.31.4-1.6 1.02-.09.23-.14.48-.14.74z"/></svg></button>
   </div>
 </div>
+<div id="mobileCatBar" role="tablist" aria-label="Categories (mobile)"></div>
 <div class="app">
   <aside class="sidebar" aria-label="Topics">
     <div class="title">Easy English</div>
@@ -364,6 +371,8 @@ if(localStorage.getItem(DARK_KEY)==='1'){
 /* create categories */
 function makeCategories(){
   categoriesEl.innerHTML = '';
+  const mobileCatBar = document.getElementById('mobileCatBar');
+  if(mobileCatBar) mobileCatBar.innerHTML='';
   categoriesOrder.forEach((cat, idx)=>{
     const d = document.createElement('div');
     d.className = 'cat';
@@ -411,6 +420,15 @@ function makeCategories(){
     d.addEventListener('click', ()=> setActive(cat));
     d.addEventListener('keydown', (e)=> { if(e.key==='Enter') setActive(cat); });
     categoriesEl.appendChild(d);
+
+    // Mobile button
+    if(mobileCatBar){
+      const btn = document.createElement('button');
+      btn.type='button';
+      btn.textContent = cat;
+      btn.addEventListener('click', ()=> setActive(cat));
+      mobileCatBar.appendChild(btn);
+    }
   });
 }
 
@@ -418,6 +436,10 @@ function makeCategories(){
 function setActive(cat){
   activeCategory = cat;
   Array.from(categoriesEl.children).forEach(c => c.classList.toggle('active', c.textContent === cat));
+  const mobileCatBar = document.getElementById('mobileCatBar');
+  if(mobileCatBar){
+    Array.from(mobileCatBar.children).forEach(b=> b.classList.toggle('active', b.textContent===cat));
+  }
   renderCategory(cat);
   // update heading text (main content title)
   mainTitle.textContent = cat;

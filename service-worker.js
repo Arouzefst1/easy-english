@@ -1,4 +1,4 @@
-const CACHE_NAME = 'easy-english-v2';
+const CACHE_NAME = 'easy-english-v3'; // bump to force update
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -6,20 +6,23 @@ const CORE_ASSETS = [
 ];
 
 // On install: cache core shell
+// Install: pre-cache core and activate immediately
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(c => c.addAll(CORE_ASSETS))
-  );
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(CORE_ASSETS)));
+  self.skipWaiting();
 });
 
 // On activate: clean old caches
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
+});
+
+// Allow page to request immediate activation
+self.addEventListener('message', e => {
+  if(e.data && e.data.type === 'SKIP_WAITING'){ self.skipWaiting(); }
 });
 
 // Strategy:
